@@ -1,6 +1,6 @@
 
-#### Optimization in the Search and Fundamental Analysis Process of Publicly Traded Companies in the US Stock Markets
+# Tsis.ai 
 
->This project covers:
+> Optimization in the Search and Fundamental Analysis Process of Publicly Traded Companies in the US Stock Markets
 
-* [Data Engineering](01_Data_Engineering) 
+- [Data Engineering](01_Data_Engineering)
