@@ -6,8 +6,13 @@ Each section covers detailed steps, best practices, and AWS services that facili
 #### Data Ingestion
 
 ````
-- Extracting and collecting data from multiple sources (e.g., APIs, databases)  
-- Using AWS services like AWS Data Pipeline, AWS Glue, and AWS Lambda for automation
+Extracting and collecting data from multiple sources (e.g., APIs, databases)  
+````
+* Doc. [API EDGAR](https://www.sec.gov/search-filings/edgar-application-programming-interfaces)
+* Downloading company fillings: [sec-edgar-downloader](https://sec-edgar-downloader.readthedocs.io/en/latest/) by [Jad Chaar](https://jadchaar.me/)
+
+````
+Using AWS services like AWS Data Pipeline, AWS Glue, and AWS Lambda for automation
 ````
 
 #### Data Storage
