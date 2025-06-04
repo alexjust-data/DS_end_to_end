@@ -1,0 +1,48 @@
+# === PYTHON ===
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.log
+
+# Entornos virtuales
+venv/
+tsis/
+.env
+.env.*
+
+# Archivos de configuración o caché
+*.sqlite3
+*.db
+*.pkl
+*.h5
+*.ipynb_checkpoints
+.DS_Store
+
+# === JUPYTER ===
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# === NODE/REACT ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+build/
+
+# === VITE ===
+.vite/
+.cache/
+
+# === SYSTEM FILES ===
+*.swp
+*.swo
+*.bak
+Thumbs.db
+ehthumbs.db
+Desktop.ini
