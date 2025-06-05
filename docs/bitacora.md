@@ -1,135 +1,132 @@
-# ✍️ Bitácora de Desarrollo - Proyecto Tsis.ai
+# 📃 Bitácora del Sistema TSIS (Tracking System for Intelligent Scalping)
 
-> Documento de referencia para entender, retomar y continuar el proyecto sin perder contexto.
+## 🔐 Objetivo General
 
----
+Desarrollar una herramienta para traders profesionales que permita:
 
-## 🔖 Objetivo del Proyecto
-
-Crear una aplicación científica que:
-
-1. Capture en tiempo real zonas de pantalla donde se ejecuta trading en la plataforma **ATAS**.
-2. Detecte patrones visuales definidos por estrategias basadas en **Order Flow, Delta, Volumen Profile, TPO**, etc.
-3. Permita etiquetar manualmente las capturas según criterios del sistema de puntuación **Kayzen**.
-4. Prepare un dataset para entrenar un modelo que reconozca patrones automáticamente.
-5. Visualice un **score en pantalla en tiempo real**, basado en la evaluación heurística o aprendizaje automático.
+* Detectar patrones de operativa en pantalla (ATAS u otra)
+* Registrar en tiempo real evidencias de entrada (pantalla, audio, video, anotaciones)
+* Etiquetar cada operación con un sistema de puntuación Kaizen
+* Crear datasets etiquetados para entrenamiento de modelos futuros
 
 ---
 
-## 📂 Estructura general del proyecto
+## 📅 Estado del desarrollo hasta el 5 de junio de 2025
+
+### 1. ✅ Captura de región de pantalla seleccionada por el usuario
+
+* Se activa un modo de pantalla completa oscurecida.
+* El usuario dibuja un rectángulo para seleccionar la región de trading.
+* La región se guarda en `config/region.json`
+* La imagen recortada se guarda como `selected_region.png`
+
+**Archivo clave:** `manual_region_selector.py`
+
+### 2. 🎤 Grabación de audio al soltar el click del ratón
+
+* Se inicia grabación con `sounddevice`
+* Se guarda como `config/audio_temp.wav`
+
+**Integrado dentro de:** `manual_region_selector.py`
+
+### 3. 🎥 Grabación de video al soltar el click
+
+* Se graba sólo la región seleccionada
+* Usa `mss` y `cv2.VideoWriter`
+* Duración: 5 segundos
+* Se guarda como `config/video_temp.mov`
+
+**Problemas solucionados:**
+
+* Compatibilidad macOS: cambiamos a formato `.mov`
+* Visualización en pantalla gris traslúcida implementada correctamente
+* Soporte multimonitor con selección inicial por consola
+
+### 4. 📐 Etiquetado Kaizen de las operaciones
+
+* Formulario visual en Jupyter Notebook (`formulari.ipynb`)
+* Dos formatos:
+
+  * **Binario:** etiquetas booleanas (ej. "vela delta?")
+  * **Puntuación Kaizen:** selectores -2, 0, +1, +2 según estrategia
+
+**Archivos relacionados:**
+
+* `label_entry_widgets.py`: interfaz interactiva
+* `label_entry.py`: etiquetado plano
+* `kayzen_scoring.py`: reglas de puntuación
+
+---
+
+## 🏦 Estructura de carpetas actual
 
 ```
 DS_end_to_end-main/
-├── capture_engine/               # Scripts para captura, selección y clasificación visual
+├── capture_engine/
+│   ├── manual_region_selector.py
+│   ├── define_trading_region.py
+│   ├── visual_platform_classifier.py
+│   ├── main.py
+│   └── main_from_selection.py
+├── config/
+│   ├── region.json
+│   ├── audio_temp.wav
+│   └── video_temp.mov
+├── notebooks/
+│   └── formulari.ipynb
 ├── data/
-│   ├── images/                   # Imágenes etiquetadas por fecha
-│   ├── labels/                   # Archivos JSON con las etiquetas Kayzen
-│   └── detected_events/         # Carpetas con capturas, audios y transcripciones
-├── docs/                        # Documentación extendida
-├── notebooks/                   # Formularios interactivos para etiquetado (Jupyter)
-├── label_entry.py               # Etiquetado por terminal
-├── label_entry_widgets.py       # Etiquetado visual en Jupyter
-├── kayzen_scoring.py            # Reglas para puntuar trades según estrategia
-├── image_labeling.py            # Guarda imagen + etiquetas automáticamente
-├── live_scoring.py              # Análisis en tiempo real y score visual
-├── video_recorder.py            # Grabación de pantalla al detectar patrón
-├── audio_transcriber.py         # Grabación + transcripción con Whisper
-└── config/region.json           # Región seleccionada por el usuario
+├── docs/
+├── label_entry_widgets.py
+├── label_entry.py
+├── kayzen_scoring.py
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## 🚦 Nuevo Módulo: Scoring en Tiempo Real
+## ⏰ Flujo de uso actual (prototipo funcional)
 
-### 🎯 Objetivo
-
-Mostrar un widget en pantalla con la puntuación en vivo (**Kayzen Score**), actualizada cada segundo mientras se analiza visualmente la zona de trading del usuario.
-
-### 🧠 Lógica
-
-* El sistema analiza la zona definida (capturada en `region.json`).
-* Aplica una heurística o red entrenada (más adelante).
-* Calcula un **score acumulado**.
-* Muestra en tiempo real ese score.
-* Si supera cierto umbral, se lanza la grabación y transcripción.
-
-### 📌 Widgets flotantes
-
-* Se mostrarán siempre (aunque el score esté en cero).
-* Transparente, discreto, pero informativo.
-
----
-
-## 📆 Flujo de trabajo cuando el sistema detecta patrón
-
-1. El score sube progresivamente (hasta +10 por ejemplo).
-2. Si supera el umbral (ej. +6.5):
+1. Ejecutar `manual_region_selector.py`
+2. Seleccionar región con el ratón
+3. Al soltar el ratón:
 
    * Se guarda imagen
-   * Se graba 1 minuto de audio y pantalla
-   * Se transcribe el audio
-   * Se guarda todo como evidencia de la entrada
-
-```
-data/detected_events/20250605_12-21-30/
-├── image.png
-├── audio.wav
-├── transcript.txt
-├── score.json
-└── metadata.json
-```
+   * Se inicia grabación de audio y video
+4. Ir a `notebooks/formulari.ipynb` para etiquetar la imagen
 
 ---
 
-## ✅ Siguientes pasos inmediatos
+## 🚀 Siguientes pasos sugeridos (prioridad alta)
 
-1. Crear `live_scoring.py`:
-
-   * Leer `config/region.json`
-   * Mostrar score flotante siempre
-   * Actualizar cada segundo
-
-2. Crear widget flotante (`tkinter` o `PyQt`):
-
-   * Score visible en pantalla
-   * Ligero, sin foco de teclado o ratón
-
-3. Definir lógica heurística temporal:
-
-   * Ej: detección de color, número de barras, etc.
-   * Evaluar reglas con `kayzen_scoring.py`
-
-4. Activar grabación + transcripción si el score supera umbral:
-
-   * Ejecutar `video_recorder.py`
-   * Ejecutar `audio_transcriber.py`
+1. Asociar ID único a cada grabación y carpeta propia
+2. Agregar transcripción de audio con `Whisper`
+3. Mostrar score de probabilidad en pantalla (modelo a futuro)
+4. Guardar todo en `training_data/{id}/`
+5. Integrar backend API y dashboard
 
 ---
 
-## 🧰 A tener en cuenta
+## 📷 Evidencias
 
-* El sistema debe poder ejecutarse en segundo plano sin interrumpir al trader.
-* Todo debe guardarse automáticamente por fecha/hora.
-* No se graba toda la sesión completa, solo fragmentos útiles.
-* El score debe ser interpretable y modificable a posteriori.
-
----
-
-## 🧪 Validación y checklist
-
-* [ ] `live_scoring.py` muestra score visible (aunque sea 0)
-* [ ] Se analiza la región seleccionada sin error
-* [ ] El score se actualiza automáticamente
-* [ ] Se lanza la grabación si hay patrón
-* [ ] Se transcribe y guarda correctamente
+* Captura pantalla completa gris OK
+* Selección visual con rectángulo verde OK
+* Grabación de video (solo región seleccionada) OK
+* Grabación de audio OK
+* Notebook de puntuación funcional OK
 
 ---
 
-## 🧠 Relevancia emocional
+## 🧱 Recomendaciones para continuar mañana
 
-* El sistema permite incluir emociones y pensamientos del trader grabando su voz y transcribiendo lo que dice.
-* Se usará para análisis cognitivo-conductual y mejora operativa futura.
+* Ejecutar `manual_region_selector.py` para probar comportamiento
+* Verificar que se guarden los archivos correctamente
+* Revisar formulari.ipynb y su visualización
+* Hacer un test de grabación completa (imagen + audio + video)
+* Confirmar permisos de pantalla (macOS)
 
 ---
+
+*Actualizado el 5 de junio de 2025 a las 19:00h por ChatGPT*
 
 
