@@ -12,6 +12,7 @@ Crear una aplicación científica que:
 2. Detecte patrones visuales definidos por estrategias basadas en **Order Flow, Delta, Volumen Profile, TPO**, etc.
 3. Permita etiquetar manualmente las capturas según criterios del sistema de puntuación **Kayzen**.
 4. Prepare un dataset para entrenar un modelo que reconozca patrones automáticamente.
+5. Visualice un **score en pantalla en tiempo real**, basado en la evaluación heurística o aprendizaje automático.
 
 ---
 
@@ -22,120 +23,113 @@ DS_end_to_end-main/
 ├── capture_engine/               # Scripts para captura, selección y clasificación visual
 ├── data/
 │   ├── images/                   # Imágenes etiquetadas por fecha
-│   └── labels/                   # Archivos JSON con las etiquetas Kayzen
+│   ├── labels/                   # Archivos JSON con las etiquetas Kayzen
+│   └── detected_events/         # Carpetas con capturas, audios y transcripciones
 ├── docs/                        # Documentación extendida
 ├── notebooks/                   # Formularios interactivos para etiquetado (Jupyter)
 ├── label_entry.py               # Etiquetado por terminal
 ├── label_entry_widgets.py       # Etiquetado visual en Jupyter
 ├── kayzen_scoring.py            # Reglas para puntuar trades según estrategia
-└── image_labeling.py            # Guarda imagen + etiquetas automáticamente
+├── image_labeling.py            # Guarda imagen + etiquetas automáticamente
+├── live_scoring.py              # Análisis en tiempo real y score visual
+├── video_recorder.py            # Grabación de pantalla al detectar patrón
+├── audio_transcriber.py         # Grabación + transcripción con Whisper
+└── config/region.json           # Región seleccionada por el usuario
 ```
 
 ---
 
-## 🎨 Captura y selección de zona de trading
+## 🚦 Nuevo Módulo: Scoring en Tiempo Real
 
-### Paso 1. Definir zona de captura:
+### 🎯 Objetivo
 
-```bash
-python capture_engine/define_trading_region.py
-```
+Mostrar un widget en pantalla con la puntuación en vivo (**Kayzen Score**), actualizada cada segundo mientras se analiza visualmente la zona de trading del usuario.
 
-* Se abre pantalla completa.
-* Se dibuja una región con el ratón.
-* Se confirma con `c`, resetea con `r`, sale con `ESC`.
-* Se guarda:
+### 🧠 Lógica
 
-  * Zona en `config/region.json`
-  * Imagen en `data/images/selected_region.png`
+* El sistema analiza la zona definida (capturada en `region.json`).
+* Aplica una heurística o red entrenada (más adelante).
+* Calcula un **score acumulado**.
+* Muestra en tiempo real ese score.
+* Si supera cierto umbral, se lanza la grabación y transcripción.
 
-### Paso 2. Capturar en vivo esa región:
+### 📌 Widgets flotantes
 
-```bash
-python capture_engine/main_from_selection.py
-```
-
-* Muestra en tiempo real solo la zona marcada.
-* Usado para debug y futuro reconocimiento visual.
+* Se mostrarán siempre (aunque el score esté en cero).
+* Transparente, discreto, pero informativo.
 
 ---
 
-## 📅 Sistema de puntuación Kayzen (manual)
+## 📆 Flujo de trabajo cuando el sistema detecta patrón
 
-### Archivos clave:
+1. El score sube progresivamente (hasta +10 por ejemplo).
+2. Si supera el umbral (ej. +6.5):
 
-* `kayzen_scoring.py`: contiene las funciones `evaluar_estrategia_0`, `evaluar_estrategia_2` e `intradia`.
-* Entrada: diccionarios con respuestas booleanas
-* Salida: puntuación entera total
+   * Se guarda imagen
+   * Se graba 1 minuto de audio y pantalla
+   * Se transcribe el audio
+   * Se guarda todo como evidencia de la entrada
 
-### Ejemplo de uso:
-
-```python
-from kayzen_scoring import puntuar_trade_total
-
-res_estr0 = {...}
-res_estr2 = {...}
-res_intradia = {...}
-
-puntos = puntuar_trade_total(res_estr0, res_estr2, res_intradia)
+```
+data/detected_events/20250605_12-21-30/
+├── image.png
+├── audio.wav
+├── transcript.txt
+├── score.json
+└── metadata.json
 ```
 
 ---
 
-## 📁 Etiquetado de capturas
+## ✅ Siguientes pasos inmediatos
 
-### 1. Desde terminal:
+1. Crear `live_scoring.py`:
 
-```bash
-python label_entry.py
-```
+   * Leer `config/region.json`
+   * Mostrar score flotante siempre
+   * Actualizar cada segundo
 
-* Pide nombre de imagen (sin `.png`)
-* Pregunta uno a uno los criterios
-* Guarda JSON en `data/labels/`
+2. Crear widget flotante (`tkinter` o `PyQt`):
 
-### 2. Desde Jupyter:
+   * Score visible en pantalla
+   * Ligero, sin foco de teclado o ratón
 
-```python
-from label_entry_widgets import lanzar_formulario
-lanzar_formulario()
-```
+3. Definir lógica heurística temporal:
 
-* Formulario visual con casillas de verificación
-* Guarda archivo de etiquetas en `data/labels/`
+   * Ej: detección de color, número de barras, etc.
+   * Evaluar reglas con `kayzen_scoring.py`
 
----
+4. Activar grabación + transcripción si el score supera umbral:
 
-## 📚 Dataset para entrenamiento
-
-### Imagen y etiqueta deben tener el mismo nombre base:
-
-```
-data/images/20250604_204532.png
-           └────────────────────────────────────────────────────
-
-             data/labels/20250604_204532.json
-```
-
-Estos pares están listos para ser cargados por cualquier modelo de clasificación visual.
+   * Ejecutar `video_recorder.py`
+   * Ejecutar `audio_transcriber.py`
 
 ---
 
-## 🧰 Pendiente para el futuro
+## 🧰 A tener en cuenta
 
-* Entrenamiento de modelo CNN o clasificador visual con etiquetas Kayzen.
-* Sistema automático que reconozca en vivo la puntuación y envíe alerta.
-* Dashboard para visualizar capturas, etiquetas, puntuaciones y logs.
+* El sistema debe poder ejecutarse en segundo plano sin interrumpir al trader.
+* Todo debe guardarse automáticamente por fecha/hora.
+* No se graba toda la sesión completa, solo fragmentos útiles.
+* El score debe ser interpretable y modificable a posteriori.
 
 ---
 
-## 🚫 Problemas comunes y soluciones
+## 🧪 Validación y checklist
 
-| Problema                                   | Solución                                                             |
-| ------------------------------------------ | -------------------------------------------------------------------- |
-| La ventana de selección se ve gris y vacía | Ejecutar desde terminal del sistema, no desde VSCode                 |
-| No se abre imagen al seleccionar región    | Asegurarse de tener permisos en `Privacidad > Grabación de pantalla` |
-| `ModuleNotFoundError: ipywidgets`          | Ejecutar `pip install ipywidgets` dentro del entorno virtual         |
-| Imagen y etiqueta no se corresponden       | Verificar que tengan el mismo nombre base (sin extensión)            |
+* [ ] `live_scoring.py` muestra score visible (aunque sea 0)
+* [ ] Se analiza la región seleccionada sin error
+* [ ] El score se actualiza automáticamente
+* [ ] Se lanza la grabación si hay patrón
+* [ ] Se transcribe y guarda correctamente
+
+---
+
+## 🧠 Relevancia emocional
+
+* El sistema permite incluir emociones y pensamientos del trader grabando su voz y transcribiendo lo que dice.
+* Se usará para análisis cognitivo-conductual y mejora operativa futura.
+
+---
 
 

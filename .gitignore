@@ -1,29 +1,28 @@
-# === PYTHON ===
-__pycache__/
-*.py[cod]
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-.eggs/
-*.log
-
-# Entornos virtuales
+# === ENTORNOS VIRTUALES ===
 venv/
 tsis/
 .env
 .env.*
 
-# Archivos de configuración o caché
+# === ARCHIVOS DE CONFIGURACIÓN O TEMPORALES ===
 *.sqlite3
 *.db
 *.pkl
 *.h5
-*.ipynb_checkpoints
+*.log
 .DS_Store
+*.swp
+*.swo
+*.bak
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# === JUPYTER ===
+# === PYTHON ===
+__pycache__/
+*.pyc
+
+# === JUPYTER NOTEBOOK ===
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
@@ -39,11 +38,15 @@ build/
 .vite/
 .cache/
 
-# === SYSTEM FILES ===
-*.swp
-*.swo
-*.bak
-Thumbs.db
-ehthumbs.db
-Desktop.ini
+# === ARCHIVOS DE AUDIO/VIDEO TEMPORALES ===
+config/audio_temp.wav
+config/video_temp.mov
+config/video_temp.mp4
+config/selected_region.png
+
+# === ETIQUETADO TEMPORAL ===
+data/images/
+data/labels/
+training_data/
+
 

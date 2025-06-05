@@ -1,59 +1,100 @@
+
 # label_entry_widgets.py
+
 import json
 from pathlib import Path
 import ipywidgets as widgets
 from IPython.display import display, clear_output
+from datetime import datetime
 
 # Carpetas
 IMAGE_DIR = Path("data/images")
 LABEL_DIR = Path("data/labels")
-IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 LABEL_DIR.mkdir(parents=True, exist_ok=True)
 
-# Criterios Kayzen
-CRITERIOS = [
-    "banda_oferta_demanda",
-    "stacked_imbalance",
-    "doble_absorcion",
-    "absorcion_en_cima",
-    "rotura_hacia_nivel",
-    "en_zona_de_rechazo",
-    "divergencia_en_delta",
-    "delta_reversal",
-    "cambio_de_color",
-    "velas_dentro",
-    "recupera_nivel",
-    "microtrampolin",
-    "respeta_hora_estrategia",
-    "bonus_absorcion_reversal",
-]
+def dropdown_dict(preguntas_dict):
+    return {
+        k: widgets.HBox([
+            widgets.Label(value=k, layout=widgets.Layout(width="400px")),
+            widgets.Dropdown(options=v, layout=widgets.Layout(width="60px"))
+        ])
+        for k, v in preguntas_dict.items()
+    }
 
-# Crear widgets
-nombre_input = widgets.Text(description="Nombre", placeholder="20250604_204532")
-checkboxes = {c: widgets.Checkbox(description=c.replace('_', ' ').capitalize()) for c in CRITERIOS}
-boton = widgets.Button(description="Guardar etiqueta", button_style="success")
-salida = widgets.Output()
+# Rangos según Excel
+PREGUNTAS_ESTRATEGIA_0 = {
+    "¿Tenemos una banda de OFERTA y DEMANDA?": [-2, 0],
+    "¿Camino LIBRE de OBSTÁCULOS (al menos en un 2:1)?": [-3, 0],
+    "¿Tenemos stacked imbalance?": [0, 1],
+    "¿Hay doble absorción?": [0, 2],
+    "¿El precio ha tocado VWAP en el momento de la entrada?": [0, 1],
+    "¿Hay absorción?": [0, 1],
+    "¿Hay DIVERGENCIA en DELTA?": [0, 1],
+    "¿Tenemos VELA REVERSAL (Blanca o Negra)?": [0, 1],
+    "¿Hay imbalances de rechazo?": [0, 1],
+    "¿Has hecho cierre parcial?": [-1, 1],
+    "¿El CLÚSTER de la vela indica impulso?": [0, 1],
+    "¿Tenemos zona en M1?": [0, 2],
+    "¿Has respetado la hora de la estrategia?": [-2, 0],
+    "BONUS: Banda generada con ABSORCIÓN + REVERSA + CVM impulso": [0, 3]
+}
 
-def guardar_etiqueta_widgets(_):
-    etiquetas = {criterio: cb.value for criterio, cb in checkboxes.items()}
-    nombre_base = nombre_input.value.strip()
-    if not nombre_base:
-        with salida:
-            clear_output()
-            print("⚠️ Debes ingresar un nombre de imagen.")
-        return
-    etiqueta_path = LABEL_DIR / f"{nombre_base}.json"
-    with open(etiqueta_path, "w") as f:
-        json.dump(etiquetas, f, indent=2)
-    with salida:
-        clear_output()
-        print(f"✅ Etiquetas guardadas en: {etiqueta_path}")
+PREGUNTAS_ESTRATEGIA_2 = {
+    "¿Más de 3 imbalances agrupados/Bigtrades/VWAP?": [-2, 1],
+    "¿Están en zona de flip o extremo del hueco?": [-2, 1],
+    "¿Tengo stacked en M1?": [0, 1],
+    "¿Hueco coincide con perfil volumen?": [-2, 2],
+    "¿Renko está OK?": [-2, 1],
+    "¿M1 despejado de velas contrarias?": [-2, 0],
+    "¿He comprobado los colores?": [0, 1],
+    "¿Reacción de imbalances o absorción?": [-2, 0],
+    "¿Hora/volatilidad/news?": [-1, 2],
+    "¿He hecho cierre parcial?": [-1, 1],
+    "¿Respetado mi cifra?": [-2, 2],
+    "¿He entrado antes de la cuenta?": [-2, 0]
+}
 
-boton.on_click(guardar_etiqueta_widgets)
+PREGUNTAS_INTRADIA = {
+    "¿Toca zona de VAH / VAL?": [-3, 0],
+    "¿Hay VOLUMEN VERTICAL relevante?": [-3, 0],
+    "¿Hay ABSORCIÓN delta?": [-1, 2],
+    "¿Vela AGOTAMIENTO, ESR?": [-1, 2],
+    "¿Distancia a VWAP ≥ 2-3x SL?": [-1, 2],
+    "¿TPO contrario, Single prints o Imbalances?": [0, 2],
+    "¿Stop comprometido (>20 ticks)?": [-3, 1],
+    "¿Máx órdenes diarias superado?": [-2, 1]
+}
 
 def lanzar_formulario():
-    display(nombre_input)
-    for cb in checkboxes.values():
-        display(cb)
-    display(boton)
-    display(salida)
+    dropdowns_0 = dropdown_dict(PREGUNTAS_ESTRATEGIA_0)
+    dropdowns_2 = dropdown_dict(PREGUNTAS_ESTRATEGIA_2)
+    dropdowns_intra = dropdown_dict(PREGUNTAS_INTRADIA)
+
+    guardar_btn = widgets.Button(description="Guardar etiquetas", button_style='success')
+    salida = widgets.Output()
+
+    def guardar_datos(b):
+        etiquetas = {
+            "estrategia_0": {k: int(w.children[1].value) for k, w in dropdowns_0.items()},
+            "estrategia_2": {k: int(w.children[1].value) for k, w in dropdowns_2.items()},
+            "intradia": {k: int(w.children[1].value) for k, w in dropdowns_intra.items()}
+        }
+
+        nombre = datetime.now().strftime("%Y%m%d_%H%M%S")
+        with open(LABEL_DIR / f"{nombre}.json", "w") as f:
+            json.dump(etiquetas, f, indent=2)
+
+        with salida:
+            clear_output()
+            print(f"✔️ Etiquetas guardadas en {nombre}.json")
+
+    guardar_btn.on_click(guardar_datos)
+
+    display(widgets.HTML("<h3>🧠 Etiquetado Kayzen</h3>"))
+    display(widgets.HTML("<b>Estrategia 0</b>"))
+    display(*dropdowns_0.values())
+    display(widgets.HTML("<b>Estrategia 2</b>"))
+    display(*dropdowns_2.values())
+    display(widgets.HTML("<b>Intradía</b>"))
+    display(*dropdowns_intra.values())
+    display(guardar_btn, salida)

@@ -1,28 +1,41 @@
-import mss
-import cv2
-import numpy as np
 import time
+import cv2
+import mss
+from pathlib import Path
+from datetime import datetime
 
-def main():
+def capture_screen(region):
     with mss.mss() as sct:
-        monitor = sct.monitors[1]  # Change to [2] or specific region for other screens
-        print("Starting screen capture. Press Ctrl+C to stop.")
+        screenshot = sct.grab(region)
+        img = cv2.cvtColor(np.array(screenshot), cv2.COLOR_BGRA2BGR)
+        return img
 
-        while True:
-            screenshot = sct.grab(monitor)
-            img = np.array(screenshot)
-
-            # Convert BGRA to BGR
-            frame = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
-
-            # Show the screen capture in a window
-            cv2.imshow("ATAS Screen - Live Capture", frame)
-
-            # Break loop with 'q' key
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-        cv2.destroyAllWindows()
+def save_image(img, name=None):
+    images_dir = Path("data/images")
+    images_dir.mkdir(parents=True, exist_ok=True)
+    if not name:
+        name = datetime.now().strftime("%Y%m%d_%H%M%S")
+    path = images_dir / f"{name}.png"
+    cv2.imwrite(str(path), img)
+    return path
 
 if __name__ == "__main__":
-    main()
+    import json
+
+    config_path = Path("config/region.json")
+    if not config_path.exists():
+        print("❌ Región no definida. Ejecuta define_trading_region.py primero.")
+        exit()
+
+    with open(config_path) as f:
+        region = json.load(f)
+
+    print("✅ Iniciando captura continua...")
+    while True:
+        img = capture_screen(region)
+        cv2.imshow("Live Capture", img)
+
+        if cv2.waitKey(1) == ord("q"):
+            break
+
+    cv2.destroyAllWindows()
